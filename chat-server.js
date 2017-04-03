@@ -143,7 +143,7 @@ io.sockets.on("connection", function(socket){
 				
 		for (var i =0; i<clients.length; i++) {
 			if(clients[i] != null) {
-			if(clients[i].id == banned_users_user.id) {
+			if(clients[i].id == slave.id) {
 				userObject = clients[i];
 				console.log("the userObject got set, userObject.username = " +  userObject.username);
 			}}
@@ -171,7 +171,7 @@ io.sockets.on("connection", function(socket){
 		
 		//iterate through the room, remove the user when you find them by id
 		for (var i = 0; i<prev_user_room.members.length; i++) {
-			if(prev_user_room.members[i].id == banned_users_user.id) {
+			if(prev_user_room.members[i].id == slave.id) {
 				userObject = prev_user_room.members[i]; 
 			}
 			var room_no = prev_user_room.members.indexOf(userObject);
@@ -197,16 +197,16 @@ io.sockets.on("connection", function(socket){
 		var temp_master = room.master;
 		
 		if (temp_master == master) {
-			var banned_users_user = null;
+			var slave = null;
 			for (var i = 0; i<clients.length; i++) {
 				if (slave == clients[i].username) {
-					banned_users_user = clients[i];
+					slave = clients[i];
 					break;
 				}
 			}
 			
 		for (var i =0; i<clients.length; i++) {
-			if(clients[i].id == banned_users_user.id) {
+			if(clients[i].id == slave.id) {
 				userObject = clients[i];
 				console.log("the userObject got set, userObject.username = " +  userObject.username);
 			}
@@ -233,7 +233,7 @@ io.sockets.on("connection", function(socket){
 		new_user_room.members.push(userObject);
 		
 		for (var i = 0; i<prev_user_room.members.length; i++) {
-			if(prev_user_room.members[i].id == banned_users_user.id) {
+			if(prev_user_room.members[i].id == slave.id) {
 				userObject = prev_user_room.members[i]; 
 			}
 			var room_no = prev_user_room.members.indexOf(userObject);
@@ -243,7 +243,7 @@ io.sockets.on("connection", function(socket){
 
 		}
 		io.sockets.emit('display_newUsers', {room:prev_key_room, users:prev_user_room.members});
-		room.banned_users.push(banned_users_user);
+		room.banned_users.push(slave);
 		} 
 		else {
 			return;
