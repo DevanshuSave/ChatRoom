@@ -25,3 +25,8 @@
 
 * Repo owner or admin
 * Other community or team contact
+
+
+### Functionality Updates
+
+* Chat message is cleared once message is sent.
