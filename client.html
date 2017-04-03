@@ -3,6 +3,7 @@
 <head>
 	<link rel="stylesheet" href="style.css">
     <script src="/socket.io/socket.io.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
     <script type ="text/javascript">
 	
 	var room = "home";
@@ -12,6 +13,8 @@
 	$(document).ready(function(){
 		$("#logged_out").hide();
 		$("#logged_in").hide();
+		$("#logout_button").hide();
+		$("#login_button").show();
 	});
 	
 	socketio.on("message_to_client",function(data) {
@@ -112,7 +115,7 @@
 		}
 	}
 	
-	function signOut(){
+	function logout(){
 		//Handle welcome message 
 		$("#logged_out").show();
 		$("#logged_in").hide();

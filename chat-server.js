@@ -80,7 +80,6 @@ io.sockets.on("connection", function(socket){
 			if( clients[i].id==socket.id ) {
 				userObject = clients[i];
 			}
-			//
 			var count = clients.indexOf(userObject);
 			if(count > -1) {
 				clients.splice(count,1);
@@ -102,9 +101,9 @@ io.sockets.on("connection", function(socket){
 			if(user_room.members[i].id ==socket.id) {
 				userObject = user_room.members[i]; 
 			}
-			var roomIndex = user_room.members.indexOf(userObject);
-			if(roomIndex >-1) {
-				user_room.members.splice(roomIndex,1);
+			var room_no = user_room.members.indexOf(userObject);
+			if(room_no >-1) {
+				user_room.members.splice(room_no,1);
 			}
 
 		}
@@ -124,7 +123,7 @@ io.sockets.on("connection", function(socket){
 		rooms[data.room_name] = {"members":[],"master":data.master,"pwd":null,"banned_users":[]};
 		list_rooms = Object.keys(rooms);
 		io.sockets.emit('display_newRoom', {rooms:list_rooms, master: data.master});	
-		console.log("User - " + data.master + "created a new private room - " + data.room_name + "with password" + data.pwd);
+		console.log("User - " + data.master + "created a new private room - " + data.room_name + "with pwd" + data.pwd);
 	});
 	
 	socket.on('kick', function(data) {
@@ -132,7 +131,7 @@ io.sockets.on("connection", function(socket){
 		var master = data['master'];
 		var slave = data['slave'];
 		var room = rooms[room_name];
-		var temp_master = room.admin;
+		var temp_master = room.master;
 		if (temp_master == master) {
 			var temp = null;
 			for (var i = 0; i<clients.length; i++) {
@@ -144,62 +143,50 @@ io.sockets.on("connection", function(socket){
 				
 		for (var i =0; i<clients.length; i++) {
 			if(clients[i] != null) {
-			if(clients[i].id == banned_user.id) {
+			if(clients[i].id == banned_users_user.id) {
 				userObject = clients[i];
 				console.log("the userObject got set, userObject.username = " +  userObject.username);
 			}}
 		}
-		userObject.room = 'lobby_room';
+		userObject.room = 'home';
 		
 		var room_keys = Object.keys(rooms);
 		console.log("Room keys is:");
 		console.log(room_keys);
-		var old_room_index = -1;
-		var old_key_room = null;
-		var old_room = room_name;
-		console.log("old_room_index is " + old_room_index);
+		var prev_room_index = -1;
+		var prev_key_room = null;
+		var prev_room = room_name;
+		console.log("prev_room_index is " + prev_room_index);
 		for (var i = 0; i<room_keys.length; i++) {
-			//var currRoom = room_keys[i]
-			if(room_keys[i] == old_room) {
-				old_room_index = i;
-				old_key_room = room_keys[i];
-				//user_room = currRoom;
-				//console.log("typeof currRoom is " + typeof(currRoom));
+			if(room_keys[i] == prev_room) {
+				prev_room_index = i;
+				prev_key_room = room_keys[i];
 			}
 		}
-		console.log("old_room_index is " + old_room_index);
-		var old_user_room = rooms[old_key_room];
-		console.log("old_user_room is ");
-		console.log(old_user_room);
-		//console.log("old_user_room.members is" + old_user_room.members);
-		
+		var prev_user_room = rooms[prev_key_room];
 		var new_user_room = rooms['home'];
 		new_user_room.members.push(userObject);
 		console.log("new_user_room.members is " + new_user_room.members);
 		
 		
 		//iterate through the room, remove the user when you find them by id
-		for (var i = 0; i<old_user_room.members.length; i++) {
-			if(old_user_room.members[i].id == banned_user.id) {
-				userObject = old_user_room.members[i]; 
+		for (var i = 0; i<prev_user_room.members.length; i++) {
+			if(prev_user_room.members[i].id == banned_users_user.id) {
+				userObject = prev_user_room.members[i]; 
 			}
-			var roomIndex = old_user_room.members.indexOf(userObject);
-			if(roomIndex > -1) {
-				old_user_room.members.splice(roomIndex,1);
+			var room_no = prev_user_room.members.indexOf(userObject);
+			if(room_no > -1) {
+				prev_user_room.members.splice(room_no,1);
 			}
 
 		}
-		io.sockets.connected[banned_user.id].emit('public_room_switch', {new_room:'home'});
-		io.sockets.connected[banned_user.id].emit('kick_call_back', {success:true, room:room_name});
-		io.sockets.emit('update_users_list', {room:old_key_room, users:old_user_room.members});
+		io.sockets.emit('display_newUsers', {room:prev_key_room, users:prev_user_room.members});
 		
-		} else {return;}
-	
-			
-					console.log("the kicked user did switch rooms!");
-					io.sockets.emit('update_users_list', {room:'home', users:new_user_room.members});
-	
-	
+		} 
+		else {
+			return;
+		}
+		io.sockets.emit('display_newUsers', {room:'home', users:new_user_room.members});	
 	});
 	
 	socket.on('ban', function(data) {
@@ -207,70 +194,61 @@ io.sockets.on("connection", function(socket){
 		var master = data['master'];
 		var slave = data['slave'];
 		var room = rooms[room_name];
-		var temp_master = room.admin;
+		var temp_master = room.master;
 		
 		if (temp_master == master) {
-			var banned_user = null;
+			var banned_users_user = null;
 			for (var i = 0; i<clients.length; i++) {
 				if (slave == clients[i].username) {
-					banned_user = clients[i];
+					banned_users_user = clients[i];
 					break;
 				}
 			}
 			
 		for (var i =0; i<clients.length; i++) {
-			if(clients[i].id == banned_user.id) {
+			if(clients[i].id == banned_users_user.id) {
 				userObject = clients[i];
 				console.log("the userObject got set, userObject.username = " +  userObject.username);
 			}
 		}
 		userObject.room = 'home';
 		
-		//find the index of the user's old room in the rooms object/array
+		//find the index of the user's prev room in the rooms object/array
 		var room_keys = Object.keys(rooms);
 		console.log("Room keys is:");
 		console.log(room_keys);
-		var old_room_index = -1;
-		var old_key_room = null;
-		var old_room = room_name;
-		console.log("old_room_index is " + old_room_index);
+		var prev_room_index = -1;
+		var prev_key_room = null;
+		var prev_room = room_name;
+		console.log("prev_room_index is " + prev_room_index);
 		for (var i = 0; i<room_keys.length; i++) {
-			if(room_keys[i] == old_room) {
-				old_room_index = i;
-				old_key_room = room_keys[i];
+			if(room_keys[i] == prev_room) {
+				prev_room_index = i;
+				prev_key_room = room_keys[i];
 			}
 
 		}
-		console.log("old_room_index is " + old_room_index);
-		var old_user_room = rooms[old_key_room];
-		console.log("old_user_room is ");
-		console.log(old_user_room);		
-		
-
+		var prev_user_room = rooms[prev_key_room];
 		var new_user_room = rooms['home'];
 		new_user_room.members.push(userObject);
-		console.log("new_user_room.members is " + new_user_room.members);
 		
-		//iterate through the room, remove the user when you find them by id
-		for (var i = 0; i<old_user_room.members.length; i++) {
-			if(old_user_room.members[i].id == banned_user.id) {
-				userObject = old_user_room.members[i]; 
+		for (var i = 0; i<prev_user_room.members.length; i++) {
+			if(prev_user_room.members[i].id == banned_users_user.id) {
+				userObject = prev_user_room.members[i]; 
 			}
-			var roomIndex = old_user_room.members.indexOf(userObject);
-			if(roomIndex > -1) {
-				old_user_room.members.splice(roomIndex,1);
+			var room_no = prev_user_room.members.indexOf(userObject);
+			if(room_no > -1) {
+				prev_user_room.members.splice(room_no,1);
 			}
 
 		}
-		io.sockets.connected[banned_user.id].emit('public_room_switch', {new_room:'home'});
-		io.sockets.connected[banned_user.id].emit('ban_call_back', {success:true, room:room_name});
-		io.sockets.emit('update_users_list', {room:old_key_room, users:old_user_room.members});
-		
-
-			room.banned.push(banned_user);
-		} else {return;}
-					console.log("the banned user did switch rooms!");
-					io.sockets.emit('update_users_list', {room:'home', users:new_user_room.members});
+		io.sockets.emit('display_newUsers', {room:prev_key_room, users:prev_user_room.members});
+		room.banned_users.push(banned_users_user);
+		} 
+		else {
+			return;
+		}
+		io.sockets.emit('display_newUsers', {room:'home', users:new_user_room.members});
 		
 	});
 });
