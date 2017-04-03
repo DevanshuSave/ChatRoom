@@ -29,4 +29,5 @@
 
 ### Functionality Updates
 
-* Chat message is cleared once message is sent.
+* Chat message is cleared once the message is sent.
+* Trailing spaces are cleared from the message.
